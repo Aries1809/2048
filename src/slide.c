@@ -65,7 +65,7 @@ int32_t	slide_line(uint64_t *line, uint64_t size, uint64_t *score)
 	return (moved);
 }
 
-int32_t	move(t_game *g, t_dir dir)
+int32_t	move_board(t_game *g, t_dir dir)
 {
 	uint64_t	tmp[MAX_SIZE];
 	int32_t		moved = 0;

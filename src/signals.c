@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                       :::      ::::::::    */
-/*   resize.c                                          :+:      :+:    :+:    */
+/*   signals.c                                         :+:      :+:    :+:    */
 /*                                                   +:+ +:+         +:+      */
 /*   By: kseltenr <kseltenr@student.42.fr>         #+#  +:+       +#+         */
 /*                                               +#+#+#+#+#+   +#+            */
@@ -12,23 +12,20 @@
 
 #include "wkw.h"
 
-static volatile sig_atomic_t	g_resized = 0;
+static volatile sig_atomic_t	g_quit = 0;
 
-static void	on_resize(int sig)
+static void	on_sigint(int sig)
 {
 	(void)sig;
-	g_resized = 1;
+	g_quit = 1;
 }
 
 void	init_signals(void)
 {
-	signal(SIGWINCH, on_resize);
+	signal(SIGINT, on_sigint);
 }
 
-int32_t	consume_resize(void)
+bool	should_quit(void)
 {
-	if (!g_resized)
-		return (0);
-	g_resized = 0;
-	return (1);
+	return (g_quit);
 }

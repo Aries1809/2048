@@ -18,6 +18,11 @@
 # include <stdint.h>
 # include <stdbool.h>
 # include <signal.h>
+# include <stdlib.h>
+# include <ncurses.h>
+# include <time.h>
+# include <inttypes.h>
+# include <string.h>
 
 typedef enum	e_const
 {
@@ -42,10 +47,15 @@ typedef struct	s_game
 
 /* SLIDE.C */
 int32_t	slide_line(uint64_t *line, uint64_t size, uint64_t *score);
-int32_t	move(t_game *g, t_dir dir);
+int32_t	move_board(t_game *g, t_dir dir);
 
-/* RESIZE.C */
+/* SIGNALS.C */
 void	init_signals(void);
-int32_t	consume_resize(void);
+bool	should_quit(void);
+
+/* GAME.C */
+void	check_win(t_game *g);
+bool	can_move(t_game *g);
+void	spawn_tile(t_game *g);
 
 #endif
