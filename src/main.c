@@ -163,7 +163,14 @@ static void	draw(t_game *g)
 				attroff(COLOR_PAIR(tile_pair(v)) | A_BOLD);
 		}
 	}
-	mvprintw(top + grid_h, left, "Score: %" PRIu64, g->score);
+
+	uint64_t	*best = &g->best[g->size - 4];
+
+	if (g->score > *best)
+		*best = g->score;
+	mvprintw(top + grid_h, left, "Score: %" PRIu64 "   Best: %" PRIu64,
+		g->score, *best);
+
 	refresh();
 }
 
