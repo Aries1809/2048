@@ -161,25 +161,25 @@ int	main(void)
 	}
 	while (!should_quit())
 	{
-	key = getch();
-	if (key == ERR)
-		continue ;
-	if (key == 27)
-		break ;
-	if (is_arrow(key) && move_board(&g, key_to_dir(key)))
-	{
-		spawn_tile(&g);
-		draw(&g);
-		if (handle_win(&g))
+		key = getch();
+		if (key == ERR)
+			continue ;
+		if (key == 27)
 			break ;
-		if (!can_move(&g))
+		if (is_arrow(key) && move_board(&g, key_to_dir(key)))
 		{
-			show_game_over();
-			break ;
+			spawn_tile(&g);
+			draw(&g);
+			if (handle_win(&g))
+				break ;
+			if (!can_move(&g))
+			{
+				show_game_over();
+				break ;
+			}
 		}
-	}
-	else
-		draw(&g);
+		else
+			draw(&g);
 	}
 	endwin();
 	return (0);
