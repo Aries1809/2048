@@ -6,7 +6,7 @@
 /*   By: kseltenr <kseltenr@student.42vienna.com>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/19 09:53:15 by kseltenr          #+#    #+#             */
-/*   Updated: 2026/11/19 10:29:00 by kseltenr         ###   ########.fr       */
+/*   Updated: 2026/11/19 14:10:32 by kseltenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,15 +121,20 @@ static void	draw(t_game *g)
 	{
 		for (uint64_t c = 0; c < g->size; c++)
 		{
-			uint64_t v = g->grid[r][c];
+			uint64_t	v = g->grid[r][c];
+			int			y = top + r * 2 + 1;
+			int			x0 = left + 1 + c * (cell_width + 1);
+
 			if (!v)
 				continue ;
-			int x = left + 1 + c * (cell_width + 1)
-				+ (cell_width - uint_len(v)) / 2;
-			mvprintw(top + r * 2 + 1, x, "%"PRIu64"", v);
+			if (has_colors())
+				attron(COLOR_PAIR(tile_pair(v)) | A_BOLD);
+			mvprintw(y, x0, "%*s", cell_width, "");
+			mvprintw(y, x0 + (cell_width - uint_len(v)) / 2, "%" PRIu64, v);
+			if (has_colors())
+				attroff(COLOR_PAIR(tile_pair(v)) | A_BOLD);
 		}
 	}
-
 	mvprintw(top + grid_height, left, "Score: %"PRIu64"", g->score);
 	refresh();
 }
@@ -140,19 +145,26 @@ int	main(void)
 	int		key;
 
 	srand(time(NULL));
-	g.size = 4;
-	spawn_tile(&g);
-	spawn_tile(&g);
 
 	initscr();
 	cbreak();
 	noecho();
 	keypad(stdscr, TRUE);
 	curs_set(0);
+	init_colors();
 	set_escdelay(25);
 	timeout(100);
 	init_signals();
+	load_best(g.best);
 
+	g.size = menu();
+	if (!g.size)
+	{
+		endwin();
+		return (0);
+	}
+	spawn_tile(&g);
+	spawn_tile(&g);
 	draw(&g);
 	if (handle_win(&g))
 	{
