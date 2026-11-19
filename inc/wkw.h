@@ -43,6 +43,7 @@ typedef struct	s_game
 	uint64_t	size;
 	uint64_t	score;
 	bool		win;
+	uint64_t	best[2];
 }	t_game;
 
 /* SLIDE.C */
@@ -57,5 +58,16 @@ bool	should_quit(void);
 void	check_win(t_game *g);
 bool	can_move(t_game *g);
 void	spawn_tile(t_game *g);
+
+/* COLORS.C */
+void	init_colors(void);
+short	tile_pair(uint64_t v);
+
+/* MENU.C */
+uint64_t	menu(void);
+
+/* BEST.C */
+void	load_best(uint64_t best[2]);
+void	save_best(uint64_t best[2]);
 
 #endif
