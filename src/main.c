@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "wkw.h"
-#include <ncurses.h>
 
 static bool	is_arrow(int key)
 {
@@ -30,20 +29,26 @@ static t_dir	key_to_dir(int key)
 	return (DIR_DOWN);
 }
 
-static void	wait_message(const char *msg)
+static int	wait_message(const char *msg)
 {
+	int	key;
+
 	mvprintw(LINES - 1, 0, "%s", msg);
 	refresh();
-	getch();
+	key = ERR;
+	while (!should_quit() && (key == ERR || key == KEY_RESIZE))
+		key = getch();
+	return (key);
 }
 
-static void	handle_win(t_game *g)
+static bool	handle_win(t_game *g)
 {
 	bool	was_won = g->win;
 
 	check_win(g);
 	if (!was_won && g->win)
-		wait_message("You win! Press any key to keep playing.");
+		return (wait_message("You win! Any key to continue, ESC to quit.") == 27);
+	return (false);
 }
 
 static void	show_game_over(void)
@@ -80,7 +85,7 @@ static int	max_value_len(t_game *g)
 
 static void	draw(t_game *g)
 {
-	clear();
+	erase();
 	int	cell_width = max_value_len(g) + 2;
 	if (cell_width < 6)
 		cell_width = 6;
@@ -96,7 +101,7 @@ static void	draw(t_game *g)
 			x = 0;
 		mvprintw(LINES / 2, x, "%s", msg);
 		refresh();
-		return ;
+		return;
 	}
 
 	int top = (LINES - (grid_height + 1)) / 2;
@@ -145,27 +150,36 @@ int	main(void)
 	keypad(stdscr, TRUE);
 	curs_set(0);
 	set_escdelay(25);
+	timeout(100);
 	init_signals();
 
+	draw(&g);
+	if (handle_win(&g))
+	{
+		endwin();
+		return (0);
+	}
 	while (!should_quit())
 	{
+	key = getch();
+	if (key == ERR)
+		continue ;
+	if (key == 27)
+		break ;
+	if (is_arrow(key) && move_board(&g, key_to_dir(key)))
+	{
+		spawn_tile(&g);
 		draw(&g);
-		key = getch();
-		if (key == 27)
+		if (handle_win(&g))
 			break ;
-		if (key == KEY_RESIZE)
-			continue ;
-		if (is_arrow(key) && move_board(&g, key_to_dir(key)))
+		if (!can_move(&g))
 		{
-			spawn_tile(&g);
-			handle_win(&g);
-			if (!can_move(&g))
-			{
-				draw(&g);
-				show_game_over();
-				break ;
-			}
+			show_game_over();
+			break ;
 		}
+	}
+	else
+		draw(&g);
 	}
 	endwin();
 	return (0);
