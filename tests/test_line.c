@@ -15,7 +15,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-int	slide_line(uint64_t *line, int size, uint64_t *score);
+int32_t	slide_line(uint64_t *line, uint64_t size, uint64_t *score);
 
 static void	check(uint64_t in[4], uint64_t want[4])
 {
@@ -25,7 +25,7 @@ static void	check(uint64_t in[4], uint64_t want[4])
 	memcpy(l, in, sizeof(l));
 	slide_line(l, 4, &score);
 	printf("%s [%"PRIu64",%"PRIu64",%"PRIu64",%"PRIu64"]\n",
-		memcmp(l, want, sizeof(l)) ? "FAIL" : "ok  ",
+		memcmp(l, want, sizeof(l)) ? "KO" : "OK",
 		l[0], l[1], l[2], l[3]);
 }
 

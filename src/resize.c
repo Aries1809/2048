@@ -25,7 +25,7 @@ void	init_signals(void)
 	signal(SIGWINCH, on_resize);
 }
 
-int	consume_resize(void)
+int32_t	consume_resize(void)
 {
 	if (!g_resized)
 		return (0);

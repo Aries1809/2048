@@ -44,4 +44,8 @@ typedef struct	s_game
 int32_t	slide_line(uint64_t *line, uint64_t size, uint64_t *score);
 int32_t	move(t_game *g, t_dir dir);
 
+/* RESIZE.C */
+void	init_signals(void);
+int32_t	consume_resize(void);
+
 #endif
