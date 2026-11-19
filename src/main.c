@@ -6,7 +6,7 @@
 /*   By: kseltenr <kseltenr@student.42vienna.com>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/19 09:53:15 by kseltenr          #+#    #+#             */
-/*   Updated: 2026/11/19 14:10:32 by kseltenr         ###   ########.fr       */
+/*   Updated: 2026/11/19 14:33:47 by kseltenr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,65 +83,87 @@ static int	max_value_len(t_game *g)
 	return max;
 }
 
+static bool	layout(t_game *g, bool art, bool square, int *cw, int *ch)
+{
+	int	digits = max_value_len(g);
+
+	if (digits < 4)
+		digits = 4;
+	*cw = art ? digits * 3 + 2 : digits + 2;
+	*ch = art ? 3 : 1;
+	if (square)
+	{
+		int	h = ((*cw + 1) * CHAR_W + CHAR_H / 2) / CHAR_H - 1;
+
+		if (h > *ch)
+			*ch = h;
+	}
+	return (COLS >= (int)g->size * (*cw + 1) + 1
+		&& LINES >= (int)g->size * (*ch + 1) + 2);
+}
+
 static void	draw(t_game *g)
 {
+	int		cw;
+	int		ch;
+	bool	art = true;
+
 	erase();
-	int	cell_width = max_value_len(g) + 2;
-	if (cell_width < 6)
-		cell_width = 6;
-	int	grid_width = g->size * (cell_width + 1) + 1;
-	int	grid_height = g->size * 2 + 1;
-	if (COLS < grid_width || LINES < grid_height + 1)
+	if (!layout(g, true, true, &cw, &ch))
 	{
-		const char	*msg = "Terminal too small";
-		int			len = (int)strlen(msg);
-		int			x = (COLS - len) / 2;
+		art = false;
+		if (!layout(g, false, true, &cw, &ch)
+			&& !layout(g, false, false, &cw, &ch))
+		{
+			const char	*msg = "Terminal too small";
+			int			x = (COLS - (int)ft_strlen(msg)) / 2;
 
-		if (x < 0)
-			x = 0;
-		mvprintw(LINES / 2, x, "%s", msg);
-		refresh();
-		return;
+			mvprintw(LINES / 2, x < 0 ? 0 : x, "%s", msg);
+			refresh();
+			return ;
+		}
 	}
-
-	int top = (LINES - (grid_height + 1)) / 2;
-	int left = (COLS - grid_width) / 2;
+	int	grid_w = g->size * (cw + 1) + 1;
+	int	grid_h = g->size * (ch + 1) + 1;
+	int	top = (LINES - (grid_h + 1)) / 2;
+	int	left = (COLS - grid_w) / 2;
 
 	for (uint64_t r = 0; r <= g->size; r++)
 	{
-		int y = top + r * 2;
-		for (int x = 0; x < grid_width; x++)
-			mvaddch(y, left + x, (x % (cell_width + 1) == 0) ? '+' : '-');
-		if (r < g->size)
-			for (uint64_t c = 0; c <= g->size; c++)
-				mvaddch(y + 1, left + c * (cell_width + 1), '|');
-	}
+		int	y = top + r * (ch + 1);
 
+		for (int x = 0; x < grid_w; x++)
+			mvaddch(y, left + x, (x % (cw + 1) == 0) ? '+' : '-');
+		if (r == g->size)
+			break ;
+		for (int k = 1; k <= ch; k++)
+			for (uint64_t c = 0; c <= g->size; c++)
+				mvaddch(y + k, left + c * (cw + 1), '|');
+	}
 	for (uint64_t r = 0; r < g->size; r++)
 	{
 		for (uint64_t c = 0; c < g->size; c++)
 		{
 			uint64_t	v = g->grid[r][c];
-			int			y = top + r * 2 + 1;
-			int			x0 = left + 1 + c * (cell_width + 1);
+			int			y = top + r * (ch + 1) + 1;
+			int			x0 = left + 1 + c * (cw + 1);
+			int			len = uint_len(v);
 
 			if (!v)
 				continue ;
 			if (has_colors())
 				attron(COLOR_PAIR(tile_pair(v)) | A_BOLD);
-			mvprintw(y, x0, "%*s", cell_width, "");
-			mvprintw(y, x0 + (cell_width - uint_len(v)) / 2, "%" PRIu64, v);
+			for (int k = 0; k < ch; k++)
+				mvprintw(y + k, x0, "%*s", cw, "");
+			if (art)
+				draw_art(y + (ch - 3) / 2, x0 + (cw - len * 3) / 2, v, len);
+			else
+				mvprintw(y + ch / 2, x0 + (cw - len) / 2, "%" PRIu64, v);
 			if (has_colors())
 				attroff(COLOR_PAIR(tile_pair(v)) | A_BOLD);
 		}
 	}
-	uint64_t	*best = &g->best[g->size - 4];
-
-	if (g->score > *best)
-		*best = g->score;
-	mvprintw(top + grid_height, left, "Score: %" PRIu64 "   Best: %" PRIu64,
-		g->score, *best);
-
+	mvprintw(top + grid_h, left, "Score: %" PRIu64, g->score);
 	refresh();
 }
 

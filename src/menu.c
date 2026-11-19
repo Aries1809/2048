@@ -26,7 +26,7 @@ uint64_t	menu(void)
 		mvprintw(top - 2, (COLS - 4) / 2, "2048");
 		for (int i = 0; i < count; i++)
 		{
-			int	x = (COLS - (int)strlen(items[i]) - 4) / 2;
+			int	x = (COLS - (int)ft_strlen(items[i]) - 4) / 2;
 
 			if (i == sel)
 				attron(A_REVERSE);

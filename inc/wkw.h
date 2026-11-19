@@ -15,6 +15,9 @@
 
 # define MAX_SIZE 5
 
+# define CHAR_W 11
+# define CHAR_H 26
+
 # include <stdint.h>
 # include <stdbool.h>
 # include <signal.h>
@@ -69,5 +72,11 @@ uint64_t	menu(void);
 /* BEST.C */
 void	load_best(uint64_t best[2]);
 void	save_best(uint64_t best[2]);
+
+/* ASCII.C */
+void	draw_art(int y, int x, uint64_t v, int len);
+
+/* FT_STRLEN.C */
+size_t	ft_strlen(const char *s);
 
 #endif
