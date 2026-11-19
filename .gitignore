@@ -2,6 +2,7 @@ compile_commands.json
 .saviour
 *.out
 2048
+.2048_best
 obj/*
 *.d
 *.o

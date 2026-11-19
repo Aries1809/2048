@@ -135,7 +135,13 @@ static void	draw(t_game *g)
 				attroff(COLOR_PAIR(tile_pair(v)) | A_BOLD);
 		}
 	}
-	mvprintw(top + grid_height, left, "Score: %"PRIu64"", g->score);
+	uint64_t	*best = &g->best[g->size - 4];
+
+	if (g->score > *best)
+		*best = g->score;
+	mvprintw(top + grid_height, left, "Score: %" PRIu64 "   Best: %" PRIu64,
+		g->score, *best);
+
 	refresh();
 }
 
@@ -166,33 +172,32 @@ int	main(void)
 	spawn_tile(&g);
 	spawn_tile(&g);
 	draw(&g);
-	if (handle_win(&g))
+	if (!handle_win(&g))
 	{
-		endwin();
-		return (0);
-	}
-	while (!should_quit())
-	{
-		key = getch();
-		if (key == ERR)
-			continue ;
-		if (key == 27)
-			break ;
-		if (is_arrow(key) && move_board(&g, key_to_dir(key)))
+		while (!should_quit())
 		{
-			spawn_tile(&g);
-			draw(&g);
-			if (handle_win(&g))
+			key = getch();
+			if (key == ERR)
+				continue ;
+			if (key == 27)
 				break ;
-			if (!can_move(&g))
+			if (is_arrow(key) && move_board(&g, key_to_dir(key)))
 			{
-				show_game_over();
-				break ;
+				spawn_tile(&g);
+				draw(&g);
+				if (handle_win(&g))
+					break ;
+				if (!can_move(&g))
+				{
+					show_game_over();
+					break ;
+				}
 			}
+			else
+				draw(&g);
 		}
-		else
-			draw(&g);
 	}
+	save_best(g.best);
 	endwin();
 	return (0);
 }
