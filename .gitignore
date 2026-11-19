@@ -1,5 +1,6 @@
 compile_commands.json
 .saviour
+*.out
 2048
 obj/*
 *.d
