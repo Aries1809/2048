@@ -1,0 +1,6 @@
+compile_commands.json
+.saviour
+2048
+obj/*
+*.d
+*.o
