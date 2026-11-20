@@ -6,7 +6,7 @@
 /*   By: kseltenr <kseltenr@student.42vienna.com>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/19 09:53:15 by kseltenr          #+#    #+#             */
-/*   Updated: 2026/11/20 21:13:42 by sancuta          ###   ########.fr       */
+/*   Updated: 2026/11/20 23:40:18 by sancuta          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,13 +32,32 @@ static t_dir	key_to_dir(int key)
 static int	wait_message(const char *msg)
 {
 	int	key;
+	int	x;
+	int	y;
 
-	mvprintw(LINES - 1, 0, "%s", msg);
+	y = LINES / 2;
+	x = (COLS - ft_strlen(msg)) / 2;
+	if (x < 0)
+		x = 0;
+	mvprintw(y, x, "%s", msg);
 	refresh();
 	key = ERR;
 	while (!should_quit() && (key == ERR || key == KEY_RESIZE))
 		key = getch();
 	return (key);
+}
+
+static void	warning_message(const char *msg)
+{
+	int	key;
+
+	move(LINES - 1, 0);
+	clrtoeol();
+	mvprintw(LINES - 1, 0, "%s", msg);
+	refresh();
+	key = ERR;
+	while (!should_quit() && (key == ERR || key == KEY_RESIZE))
+		key = getch();
 }
 
 static bool	handle_win(t_game *g)
@@ -47,7 +66,7 @@ static bool	handle_win(t_game *g)
 
 	check_win(g);
 	if (!was_won && g->win)
-		return (wait_message("You win! Any key to continue, ESC to quit.") == 27);
+		return (wait_message("You win! Any key to continue, ESC to quit.") == KEY_ESC);
 	return (false);
 }
 
@@ -58,9 +77,9 @@ static void	show_game_over(void)
 
 static int	uint_len(uint64_t i)
 {
-	int	ret = 0;
+	int	ret = 1;
 
-	while (i)
+	while (i >= 10)
 	{
 		ret++;
 		i /= 10;
@@ -152,8 +171,7 @@ static void draw(t_game *g)
 	if (!layout(g, art, &cw, &ch))
 	{
 		art = false;
-		if (!layout(g, art, &cw, &ch)
-				&& !layout(g, art, &cw, &ch))
+		if (!layout(g, art, &cw, &ch))
 		{
 			erase();
 			const char	*msg = "Terminal too small";
@@ -239,7 +257,9 @@ int	main(void)
 	set_escdelay(25);
 	timeout(100);
 	init_signals();
-	load_best(g.best);
+
+	if (!load_best(g.best))
+		warning_message("Warning: couldn't load high scores. Press any key to continue.");
 
 	g.size = menu();
 	if (!g.size)
@@ -257,7 +277,7 @@ int	main(void)
 			key = getch();
 			if (key == ERR)
 				continue ;
-			if (key == 27)
+			if (key == KEY_ESC)
 				break ;
 			if (is_arrow(key) && move_board(&g, key_to_dir(key)))
 			{
@@ -275,7 +295,8 @@ int	main(void)
 				draw(&g);
 		}
 	}
-	save_best(g.best);
+	if (!save_best(g.best))
+		warning_message("Warning: couldn't save high scores. Press any key to exit.");
 	endwin();
 	return (0);
 }

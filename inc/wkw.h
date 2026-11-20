@@ -6,7 +6,7 @@
 /*   By: kseltenr <kseltenr@student.42vienna.com>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/18 22:48:59 by kseltenr          #+#    #+#             */
-/*   Updated: 2026/11/20 22:32:06 by sancuta          ###   ########.fr       */
+/*   Updated: 2026/11/20 23:13:10 by sancuta          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,8 +99,8 @@ short	tile_pair(uint64_t v);
 uint64_t	menu(void);
 
 /* BEST.C */
-void	load_best(uint64_t best[2]);
-void	save_best(uint64_t best[2]);
+bool	load_best(uint64_t best[2]);
+bool	save_best(uint64_t best[2]);
 
 /* ASCII.C */
 void	draw_art(int y, int x, uint64_t v, int len);

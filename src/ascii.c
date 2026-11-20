@@ -6,7 +6,7 @@
 /*   By: kseltenr <kseltenr@student.42vienna.com>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/19 14:27:23 by kseltenr          #+#    #+#             */
-/*   Updated: 2026/11/20 20:15:03 by sancuta          ###   ########.fr       */
+/*   Updated: 2026/11/20 22:51:44 by sancuta          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,5 +27,5 @@ void	draw_art(int y, int x, uint64_t v, int len)
 		div *= 10;
 	for (int i = 0; i < len; i++, div /= 10)
 		for (int row = 0; row < ART_DIGIT_H; row++)
-			mvaddstr(y + row, x + i * ART_DIGIT_H, font[(v / div) % 10][row]);
+			mvaddstr(y + row, x + i * ART_DIGIT_W, font[(v / div) % 10][row]);
 }
