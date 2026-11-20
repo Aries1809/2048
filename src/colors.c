@@ -6,7 +6,7 @@
 /*   By: kseltenr <kseltenr@student.42vienna.com>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/19 13:38:25 by kseltenr          #+#    #+#             */
-/*   Updated: 2026/11/19 13:44:25 by kseltenr         ###   ########.fr       */
+/*   Updated: 2026/11/20 19:44:45 by sancuta          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ void	init_colors(void)
 	for (short i = 1; i <= 12; i++)
 	{
 		if (COLORS >= 256)
-			init_pair(i, (i <= 2) ? 235 : 255, bg256[i]);
+			init_pair(i, 235, bg256[i]);
 		else
 			init_pair(i, COLOR_BLACK, bg8[i]);
 	}

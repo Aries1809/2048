@@ -6,7 +6,7 @@
 /*   By: kseltenr <kseltenr@student.42vienna.com>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/19 09:53:15 by kseltenr          #+#    #+#             */
-/*   Updated: 2026/11/19 14:33:47 by kseltenr         ###   ########.fr       */
+/*   Updated: 2026/11/20 21:13:42 by sancuta          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,94 +83,142 @@ static int	max_value_len(t_game *g)
 	return max;
 }
 
-static bool	layout(t_game *g, bool art, bool square, int *cw, int *ch)
+static int	clamp(int v, int lo, int hi)
 {
-	int	digits = max_value_len(g);
-
-	if (digits < 4)
-		digits = 4;
-	*cw = art ? digits * 3 + 2 : digits + 2;
-	*ch = art ? 3 : 1;
-	if (square)
-	{
-		int	h = ((*cw + 1) * CHAR_W + CHAR_H / 2) / CHAR_H - 1;
-
-		if (h > *ch)
-			*ch = h;
-	}
-	return (COLS >= (int)g->size * (*cw + 1) + 1
-		&& LINES >= (int)g->size * (*ch + 1) + 2);
+	return v < lo ? lo : v > hi ? hi : v;
 }
 
-static void	draw(t_game *g)
+static bool	layout(t_game *g, bool art, int *cw, int *ch)
+{
+	int	n = (int)g->size;
+	int	digits = clamp(max_value_len(g), MIN_DIGITS, MAX_DIGITS);
+	int	min_h = art ? ART_DIGIT_H : 1;
+	int	min_w = art ? digits * ART_DIGIT_W + CELL_PAD : digits + CELL_PAD;
+	int	fit_w = (COLS - MARGIN_X - FRAME) / n - CELL_BORDER;
+	int	fit_h = (LINES - SCORE_GAP - SCORE_LINE_H - MIN_MARGIN_Y - FRAME) / n
+		- CELL_BORDER;
+
+	if (fit_w < min_w || fit_h < min_h)
+		return false;
+	*cw = art ? min_w
+		: ((fit_h + CELL_BORDER) * CHAR_H + CHAR_W / 2) / CHAR_W
+		- CELL_BORDER;
+	*cw = clamp(*cw, min_w, fit_w);
+	*ch = ((*cw + CELL_BORDER) * CHAR_W + CHAR_H / 2) / CHAR_H - CELL_BORDER;
+	*ch = clamp(*ch, min_h, fit_h);
+	return true;
+}
+
+static void draw_outer_frame(int top, int left, int w, int h)
+{
+	mvaddch(top, left, ACS_ULCORNER);
+	for (int x = 1; x < w - 1; x++)
+		mvaddch(top, left + x, ACS_HLINE);
+	mvaddch(top, left + w - 1, ACS_URCORNER);
+
+	for (int y = 1; y < h - 1; y++) {
+		mvaddch(top + y, left, ACS_VLINE);
+		mvaddch(top + y, left + w - 1, ACS_VLINE);
+	}
+
+	mvaddch(top + h - 1, left, ACS_LLCORNER);
+	for (int x = 1; x < w - 1; x++)
+		mvaddch(top + h - 1, left + x, ACS_HLINE);
+	mvaddch(top + h - 1, left + w - 1, ACS_LRCORNER);
+}
+
+static void draw_cell_top(int y, int x, int cw)
+{
+	mvaddch(y, x, ACS_ULCORNER);
+	for (int i = 1; i <= cw; i++)
+		mvaddch(y, x + i, ACS_HLINE);
+	mvaddch(y, x + cw + 1, ACS_URCORNER);
+}
+
+static void draw_cell_bottom(int y, int x, int cw)
+{
+	mvaddch(y, x, ACS_LLCORNER);
+	for (int i = 1; i <= cw; i++)
+		mvaddch(y, x + i, ACS_HLINE);
+	mvaddch(y, x + cw + 1, ACS_LRCORNER);
+}
+
+static void draw(t_game *g)
 {
 	int		cw;
 	int		ch;
 	bool	art = true;
 
-	erase();
-	if (!layout(g, true, true, &cw, &ch))
+	if (!layout(g, art, &cw, &ch))
 	{
 		art = false;
-		if (!layout(g, false, true, &cw, &ch)
-			&& !layout(g, false, false, &cw, &ch))
+		if (!layout(g, art, &cw, &ch)
+				&& !layout(g, art, &cw, &ch))
 		{
+			erase();
 			const char	*msg = "Terminal too small";
-			int			x = (COLS - (int)ft_strlen(msg)) / 2;
-
+			int	x = (COLS - (int)ft_strlen(msg)) / 2;
 			mvprintw(LINES / 2, x < 0 ? 0 : x, "%s", msg);
 			refresh();
-			return ;
+			return;
 		}
 	}
-	int	grid_w = g->size * (cw + 1) + 1;
-	int	grid_h = g->size * (ch + 1) + 1;
-	int	top = (LINES - (grid_h + 1)) / 2;
+
+	int	grid_w = (int)g->size * (cw + CELL_BORDER) + FRAME;
+	int	grid_h = (int)g->size * (ch + CELL_BORDER) + FRAME;
+	int	top = (LINES - (grid_h + SCORE_GAP + SCORE_LINE_H)) / 2;
 	int	left = (COLS - grid_w) / 2;
+	if (top < 0)  top  = 0;
+	if (left < 0) left = 0;
 
-	for (uint64_t r = 0; r <= g->size; r++)
-	{
-		int	y = top + r * (ch + 1);
+	erase();
+	draw_outer_frame(top, left, grid_w, grid_h);
 
-		for (int x = 0; x < grid_w; x++)
-			mvaddch(y, left + x, (x % (cw + 1) == 0) ? '+' : '-');
-		if (r == g->size)
-			break ;
-		for (int k = 1; k <= ch; k++)
-			for (uint64_t c = 0; c <= g->size; c++)
-				mvaddch(y + k, left + c * (cw + 1), '|');
-	}
 	for (uint64_t r = 0; r < g->size; r++)
 	{
 		for (uint64_t c = 0; c < g->size; c++)
 		{
-			uint64_t	v = g->grid[r][c];
-			int			y = top + r * (ch + 1) + 1;
-			int			x0 = left + 1 + c * (cw + 1);
-			int			len = uint_len(v);
+			uint64_t v = g->grid[r][c];
+			int	len = uint_len(v);
+			int	cx = left + 1 + (int)c * (cw + CELL_BORDER);
+			int	cy = top  + 1 + (int)r * (ch + CELL_BORDER);
+
+			draw_cell_top(cy, cx, cw);
+
+			for (int k = 1; k <= ch; k++)
+			{
+				mvaddch(cy + k, cx, ACS_VLINE);
+				if (v && has_colors())
+					attron(COLOR_PAIR(tile_pair(v)) | A_BOLD);
+				for (int i = 1; i <= cw; i++)
+					mvaddch(cy + k, cx + i, ' ');
+				if (v && has_colors())
+					attroff(COLOR_PAIR(tile_pair(v)) | A_BOLD);
+				mvaddch(cy + k, cx + cw + 1, ACS_VLINE);
+			}
+			draw_cell_bottom(cy + ch + 1, cx, cw);
 
 			if (!v)
-				continue ;
+				continue;
+
 			if (has_colors())
 				attron(COLOR_PAIR(tile_pair(v)) | A_BOLD);
-			for (int k = 0; k < ch; k++)
-				mvprintw(y + k, x0, "%*s", cw, "");
 			if (art)
-				draw_art(y + (ch - 3) / 2, x0 + (cw - len * 3) / 2, v, len);
+				draw_art(cy + 1 + (ch - ART_DIGIT_H) / 2,
+						cx + 1 + (cw - len * ART_DIGIT_W) / 2, v, len);
 			else
-				mvprintw(y + ch / 2, x0 + (cw - len) / 2, "%" PRIu64, v);
+				mvprintw(cy + 1 + (ch - 1) / 2,
+						cx + 1 + (cw - len) / 2, "%" PRIu64, v);
 			if (has_colors())
 				attroff(COLOR_PAIR(tile_pair(v)) | A_BOLD);
 		}
 	}
 
 	uint64_t	*best = &g->best[g->size - 4];
-
 	if (g->score > *best)
 		*best = g->score;
-	mvprintw(top + grid_h, left, "Score: %" PRIu64 "   Best: %" PRIu64,
-		g->score, *best);
-
+	mvprintw(top + grid_h + SCORE_GAP, left,
+			"Score: %" PRIu64 "   Best: %" PRIu64, g->score, *best);
 	refresh();
 }
 
@@ -185,6 +233,7 @@ int	main(void)
 	cbreak();
 	noecho();
 	keypad(stdscr, TRUE);
+	mousemask(ALL_MOUSE_EVENTS, NULL);
 	curs_set(0);
 	init_colors();
 	set_escdelay(25);
